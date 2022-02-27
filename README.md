@@ -30,3 +30,5 @@ This project relies on your Pi's I2C port (using GPIO pins 2 [SDA] and 3 [SCL]).
 6. If prompted to reboot the Pi, select "Yes"
 
 These steps can be found with screenshots [here](https://www.raspberrypi-spy.co.uk/2014/11/enabling-the-i2c-interface-on-the-raspberry-pi/).
+
+Copyright (C) 2022 Gerald "aunyks" Nash

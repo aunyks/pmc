@@ -125,6 +125,7 @@ dependencies = [
  "env_logger",
  "log",
  "rppal",
+ "xca9548a",
 ]
 
 [[package]]
@@ -213,3 +214,11 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "xca9548a"
+version = "0.2.1"
+source = "git+https://github.com/eldruin/xca9548a-rs.git#a965b66630e08b4af4638fd62a3db4ed6b0a8008"
+dependencies = [
+ "embedded-hal",
+]

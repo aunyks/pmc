@@ -8,12 +8,16 @@ edition = "2021"
 rppal = { git = "https://github.com/aunyks/rppal" }
 
 # https://github.com/aunyks/bno055
-bno055 = { git = "https://github.com/aunyks/bno055.git"  }
+bno055 = { git = "https://github.com/aunyks/bno055.git" }
+
+# https://github.com/eldruin/xca9548a-rs
+xca9548a = { git = "https://github.com/eldruin/xca9548a-rs.git" }
+
+# https://github.com/rust-embedded/embedded-hal
+embedded-hal = { version = "0.2.6" }
 
 # https://github.com/rust-lang/log
 log = "0.4.14"
 
 # https://github.com/env-logger-rs/env_logger
 env_logger = "0.9.0"
-
-embedded-hal = { version = "0.2.6" }

@@ -19,13 +19,14 @@ fn main() {
     // Use I2C1 (default for most modern Pis)
     let i2c = I2c::with_bus(1).expect("Could not grab I2C bus!");
 
-    let mux1 = Xca9548a::new(i2c, SlaveAddr::default());
-    let mux1_parts = mux1.split();
+    let mux0 = Xca9548a::new(i2c, SlaveAddr::default());
+    let mux0_parts = mux0.split();
 
-    // Connect to the BNO chip on this bus
-    let imu1 = Bno055::new(mux1_parts.i2c0).with_alternative_address();
+    // Connect to chips on the first mux
+    let imu0 = Bno055::new(mux0_parts.i2c0).with_alternative_address();
+    let imu1 = Bno055::new(mux0_parts.i2c1).with_alternative_address();
 
-    let mut imus = [imu1];
+    let mut imus = [imu0, imu1];
 
     // Let the BNO chips warm up
     thread::sleep(Duration::from_millis(500));

@@ -13,6 +13,8 @@ impl SuitCommand {
     pub const ID: [u8; 4] = [b'M', b'S', b'I', b'D'];
     pub const READY: [u8; 4] = [b'R', b'E', b'D', b'Y'];
     pub const DATA: [u8; 4] = [b'D', b'A', b'T', b'A'];
+    // STop STream
+    pub const CLOSE_CONNECTION: [u8; 4] = [b'S', b'T', b'S', b'T'];
 }
 
 use crate::delay::Delay;
@@ -58,7 +60,8 @@ fn main() {
     debug!("Mocap suit bound to address {}", server_bind_address);
     let tcp_listener = TcpListener::bind(server_bind_address).unwrap();
     for incoming_stream in tcp_listener.incoming() {
-        let mut stream = incoming_stream.unwrap();
+        let mut stream = incoming_stream.expect("Could not unwrap incoming TCP stream!");
+        stream.set_read_timeout(Some(Duration::from_millis(5500))).expect("Could not set the read timeout for an incoming TCP stream!");
         let mut input_buffer: [u8; 4] = [0; 4];
         // Keep the connection open until the client
         // closes it themselves
@@ -81,6 +84,16 @@ fn main() {
                         .write(&[1 as u8])
                         .expect("Could not write bytes to TCP buffer!");
                     stream.flush().expect("Could not flush TCP write buffer!");
+                }
+                SuitCommand::CLOSE_CONNECTION => {
+                    info!("Received CLOSE_CONNECTION input message. Confirming command.");
+                    stream
+                        .read(&mut input_buffer)
+                        .expect("Could not read from input buffer while confirming stop command!");
+                    if &input_buffer == &SuitCommand::CLOSE_CONNECTION {
+                        info!("CLOSE_CONNECTION confirmed. Closing connection.")
+                        break;
+                    }
                 }
                 SuitCommand::DATA => {
                     info!("Received DATA input message.");

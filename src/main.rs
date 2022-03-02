@@ -61,14 +61,20 @@ fn main() {
     let tcp_listener = TcpListener::bind(server_bind_address).unwrap();
     for incoming_stream in tcp_listener.incoming() {
         let mut stream = incoming_stream.expect("Could not unwrap incoming TCP stream!");
-        stream.set_read_timeout(Some(Duration::from_millis(5500))).expect("Could not set the read timeout for an incoming TCP stream!");
+        if stream
+            .set_read_timeout(Some(Duration::from_millis(5500)))
+            .is_err()
+        {
+            warn!("Could not set the read timeout for an incoming TCP stream!");
+        }
         let mut input_buffer: [u8; 4] = [0; 4];
         // Keep the connection open until the client
         // closes it themselves
         loop {
-            stream
-                .read(&mut input_buffer)
-                .expect("Could not read from input buffer!");
+            if stream.read(&mut input_buffer).is_err() {
+                error!("Could not read from input buffer!");
+                break;
+            }
             match input_buffer {
                 SuitCommand::ID => {
                     info!("Received ID input message.");
@@ -86,14 +92,8 @@ fn main() {
                     stream.flush().expect("Could not flush TCP write buffer!");
                 }
                 SuitCommand::CLOSE_CONNECTION => {
-                    info!("Received CLOSE_CONNECTION input message. Confirming command.");
-                    stream
-                        .read(&mut input_buffer)
-                        .expect("Could not read from input buffer while confirming stop command!");
-                    if &input_buffer == &SuitCommand::CLOSE_CONNECTION {
-                        info!("CLOSE_CONNECTION confirmed. Closing connection.")
-                        break;
-                    }
+                    info!("Received CLOSE_CONNECTION input message. Closing connection.");
+                    break;
                 }
                 SuitCommand::DATA => {
                     info!("Received DATA input message.");

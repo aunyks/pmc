@@ -1,0 +1,24 @@
+# Move me to /lib/systemd/system/
+[Unit]
+Description=Mocap Suit TCP Server
+After=network-online.target
+ 
+[Service]
+User=pi
+ExecStart=/home/pi/pmc/target/release/mocap-suit
+WorkingDirectory=/home/pi
+Nice=-15
+
+Environment="MOCAP_SUIT_LOG_LEVEL=error"
+Environment="MOCAP_SUIT_BIND_ADDRESS=0.0.0.0:7810"
+
+StandardOutput=inherit
+StandardError=inherit
+
+Restart=always
+RestartSec=1
+
+StartLimitBurst=11
+ 
+[Install]
+WantedBy=multi-user.target

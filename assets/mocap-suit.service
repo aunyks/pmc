@@ -1,4 +1,4 @@
-# Move me to /lib/systemd/system/
+# Copy me to /lib/systemd/system/
 [Unit]
 Description=Mocap Suit TCP Server
 After=network-online.target

@@ -60,79 +60,83 @@ fn main() {
     for incoming_stream in tcp_listener.incoming() {
         let mut stream = incoming_stream.unwrap();
         let mut input_buffer: [u8; 4] = [0; 4];
-        stream
-            .read(&mut input_buffer)
-            .expect("Could not read from input buffer!");
-        match input_buffer {
-            SuitCommand::ID => {
-                info!("Received ID input message.");
-                stream
-                    .write(&[0, 0, 0])
-                    .expect("Could not write bytes to TCP buffer!");
-                // stream.flush().expect("Could not flush TCP write buffer!");
-            }
-            SuitCommand::READY => {
-                info!("Received READY input message.");
-                // Send a 1 for yes, 0 would be for no
-                stream
-                    .write(&[1 as u8])
-                    .expect("Could not write bytes to TCP buffer!");
-                // stream.flush().expect("Could not flush TCP write buffer!");
-            }
-            SuitCommand::DATA => {
-                info!("Received DATA input message.");
-                let mut quaternion_slices: [[u8; 16]; 2] = [[0; 16]; 2];
-                for (imu_index, imu) in imus.iter_mut().enumerate() {
-                    trace!("Getting IMU index {}", imu_index);
-                    match imu.quaternion() {
-                        Ok(quaternion) => {
-                            let w_bytes = quaternion.s.to_le_bytes();
-                            let x_bytes = quaternion.v.x.to_le_bytes();
-                            let y_bytes = quaternion.v.y.to_le_bytes();
-                            let z_bytes = quaternion.v.z.to_le_bytes();
-                            quaternion_slices[imu_index].clone_from_slice(
-                                [w_bytes, x_bytes, y_bytes, z_bytes].concat().as_slice(),
-                            );
+        // Keep the connection open until the client
+        // closes it themselves
+        loop {
+            stream
+                .read(&mut input_buffer)
+                .expect("Could not read from input buffer!");
+            match input_buffer {
+                SuitCommand::ID => {
+                    info!("Received ID input message.");
+                    stream
+                        .write(&[0, 0, 0])
+                        .expect("Could not write bytes to TCP buffer!");
+                    stream.flush().expect("Could not flush TCP write buffer!");
+                }
+                SuitCommand::READY => {
+                    info!("Received READY input message.");
+                    // Send a 1 for yes, 0 would be for no
+                    stream
+                        .write(&[1 as u8])
+                        .expect("Could not write bytes to TCP buffer!");
+                    stream.flush().expect("Could not flush TCP write buffer!");
+                }
+                SuitCommand::DATA => {
+                    info!("Received DATA input message.");
+                    let mut quaternion_slices: [[u8; 16]; 2] = [[0; 16]; 2];
+                    for (imu_index, imu) in imus.iter_mut().enumerate() {
+                        trace!("Getting IMU index {}", imu_index);
+                        match imu.quaternion() {
+                            Ok(quaternion) => {
+                                let w_bytes = quaternion.s.to_le_bytes();
+                                let x_bytes = quaternion.v.x.to_le_bytes();
+                                let y_bytes = quaternion.v.y.to_le_bytes();
+                                let z_bytes = quaternion.v.z.to_le_bytes();
+                                quaternion_slices[imu_index].clone_from_slice(
+                                    [w_bytes, x_bytes, y_bytes, z_bytes].concat().as_slice(),
+                                );
+                            }
+                            Err(_) => {
+                                error!(
+                                    "An error occurred while getting quaternion data for BNO {}!",
+                                    imu_index
+                                );
+                                let error_bytes: [u8; 32] = [0; 32];
+                                stream
+                                    .write(&error_bytes)
+                                    .expect("Could not write bytes to TCP buffer!");
+                                stream.flush().expect("Could not flush TCP write buffer!");
+                                continue;
+                            }
                         }
-                        Err(_) => {
-                            error!(
-                                "An error occurred while getting quaternion data for BNO {}!",
-                                imu_index
-                            );
-                            let error_bytes: [u8; 32] = [0; 32];
-                            stream
-                                .write(&error_bytes)
-                                .expect("Could not write bytes to TCP buffer!");
-                            // stream.flush().expect("Could not flush TCP write buffer!");
-                            continue;
-                        }
-                    }
-                    if let Ok(is_calibrated) = imu.is_fully_calibrated() {
-                        if is_calibrated {
-                            if let Ok(calib_profile) = imu.calibration_profile(&mut delay) {
-                                if let Err(details) =
-                                    imu.set_calibration_profile(calib_profile, &mut delay)
-                                {
-                                    warn!(
+                        if let Ok(is_calibrated) = imu.is_fully_calibrated() {
+                            if is_calibrated {
+                                if let Ok(calib_profile) = imu.calibration_profile(&mut delay) {
+                                    if let Err(details) =
+                                        imu.set_calibration_profile(calib_profile, &mut delay)
+                                    {
+                                        warn!(
                                 "An error occurred while setting the IMU calibration profile for BNO {}! {:?}",
                                 imu_index,
                                 details
                             );
+                                    }
                                 }
                             }
                         }
                     }
+                    let mut quaternion_bytes: [u8; 32] = [0; 32];
+                    quaternion_bytes.copy_from_slice(quaternion_slices.concat().as_slice());
+                    stream
+                        .write(&quaternion_bytes)
+                        .expect("Could not write bytes to TCP buffer!");
+                    stream.flush().expect("Could not flush TCP write buffer!");
                 }
-                let mut quaternion_bytes: [u8; 32] = [0; 32];
-                quaternion_bytes.copy_from_slice(quaternion_slices.concat().as_slice());
-                stream
-                    .write(&quaternion_bytes)
-                    .expect("Could not write bytes to TCP buffer!");
-                // stream.flush().expect("Could not flush TCP write buffer!");
-            }
-            _ => {
-                // Ignore this connection if we can't understand it
-                debug!("Unrecognized magic bytes received from client!");
+                _ => {
+                    // Ignore this connection if we can't understand it
+                    debug!("Unrecognized magic bytes received from client!");
+                }
             }
         }
     }

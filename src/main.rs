@@ -1,6 +1,6 @@
 use bno055::{BNO055OperationMode, Bno055};
 use env_logger::{Builder, Env};
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use std::env;
 use std::io::prelude::*;
 use std::net::TcpListener;
@@ -55,6 +55,7 @@ fn main() {
         );
     }
 
+    debug!("Mocap suit bound to address {}", server_bind_address);
     let tcp_listener = TcpListener::bind(server_bind_address).unwrap();
     for incoming_stream in tcp_listener.incoming() {
         let mut stream = incoming_stream.unwrap();
@@ -68,7 +69,7 @@ fn main() {
                 stream
                     .write(&[0, 0, 0])
                     .expect("Could not write bytes to TCP buffer!");
-                stream.flush().expect("Could not flush TCP write buffer!");
+                // stream.flush().expect("Could not flush TCP write buffer!");
             }
             SuitCommand::READY => {
                 info!("Received READY input message.");
@@ -76,12 +77,13 @@ fn main() {
                 stream
                     .write(&[1 as u8])
                     .expect("Could not write bytes to TCP buffer!");
-                stream.flush().expect("Could not flush TCP write buffer!");
+                // stream.flush().expect("Could not flush TCP write buffer!");
             }
             SuitCommand::DATA => {
                 info!("Received DATA input message.");
                 let mut quaternion_slices: [[u8; 16]; 2] = [[0; 16]; 2];
                 for (imu_index, imu) in imus.iter_mut().enumerate() {
+                    trace!("Getting IMU index {}", imu_index);
                     match imu.quaternion() {
                         Ok(quaternion) => {
                             let w_bytes = quaternion.s.to_le_bytes();
@@ -101,7 +103,7 @@ fn main() {
                             stream
                                 .write(&error_bytes)
                                 .expect("Could not write bytes to TCP buffer!");
-                            stream.flush().expect("Could not flush TCP write buffer!");
+                            // stream.flush().expect("Could not flush TCP write buffer!");
                             continue;
                         }
                     }
@@ -126,7 +128,7 @@ fn main() {
                 stream
                     .write(&quaternion_bytes)
                     .expect("Could not write bytes to TCP buffer!");
-                stream.flush().expect("Could not flush TCP write buffer!");
+                // stream.flush().expect("Could not flush TCP write buffer!");
             }
             _ => {
                 // Ignore this connection if we can't understand it

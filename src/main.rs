@@ -13,9 +13,6 @@ impl SuitCommand {
     pub const ID: [u8; 4] = [b'M', b'S', b'I', b'D'];
     pub const READY: [u8; 4] = [b'R', b'E', b'D', b'Y'];
     pub const DATA: [u8; 4] = [b'D', b'A', b'T', b'A'];
-    // STop STream
-    pub const CLOSE_CONNECTION: [u8; 4] = [b'S', b'T', b'S', b'T'];
-    pub const CLIENT_DISCONNECTED: [u8; 4] = [0, 0, 0, 0];
 }
 
 use crate::delay::Delay;
@@ -90,10 +87,6 @@ fn main() {
                         .write(&[1])
                         .expect("Could not write bytes to TCP buffer!");
                     stream.flush().expect("Could not flush TCP write buffer!");
-                }
-                SuitCommand::CLIENT_DISCONNECTED => {
-                    info!("Client disconnected / received empty input. Closing connection");
-                    break;
                 }
                 SuitCommand::DATA => {
                     info!("Received DATA input message.");

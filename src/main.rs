@@ -15,6 +15,7 @@ impl SuitCommand {
     pub const DATA: [u8; 4] = [b'D', b'A', b'T', b'A'];
     // STop STream
     pub const CLOSE_CONNECTION: [u8; 4] = [b'S', b'T', b'S', b'T'];
+    pub const CLIENT_DISCONNECTED: [u8; 4] = [0, 0, 0, 0];
 }
 
 use crate::delay::Delay;
@@ -89,6 +90,10 @@ fn main() {
                     info!("Received CLOSE_CONNECTION input message. Closing connection.");
                     break;
                 }
+                SuitCommand::CLIENT_DISCONNECTED => {
+                    info!("Client disconnected / received empty input. Closing connection");
+                    break;
+                }
                 SuitCommand::DATA => {
                     info!("Received DATA input message.");
                     let mut quaternion_slices: [[u8; 16]; 2] = [[0; 16]; 2];
@@ -124,10 +129,10 @@ fn main() {
                                         imu.set_calibration_profile(calib_profile, &mut delay)
                                     {
                                         warn!(
-                                "An error occurred while setting the IMU calibration profile for BNO {}! {:?}",
-                                imu_index,
-                                details
-                            );
+                                            "An error occurred while setting the IMU calibration profile for BNO {}! {:?}",
+                                            imu_index,
+                                            details
+                                        );
                                     }
                                 }
                             }

@@ -23,10 +23,6 @@ use rppal::i2c::I2c;
 
 mod delay;
 
-fn clear_buffer(mut buf: &[u8; 4]) {
-    buf = &[0, 0, 0, 0];
-}
-
 fn main() {
     let logger_env_config = Env::default().filter_or("MOCAP_SUIT_LOG_LEVEL", "trace");
     Builder::from_env(logger_env_config).init();
@@ -70,7 +66,11 @@ fn main() {
         // Keep the connection open until the client
         // closes it themselves
         loop {
-            if stream.read(&mut input_buffer).is_err() {
+            if let Ok(num_bytes_read) = stream.read(&mut input_buffer) {
+                if num_bytes_read == 0 {
+                    break;
+                }
+            } else {
                 error!("Could not read from input buffer!");
                 break;
             }
@@ -81,7 +81,6 @@ fn main() {
                         .write(&[0, 0, 0])
                         .expect("Could not write bytes to TCP buffer!");
                     stream.flush().expect("Could not flush TCP write buffer!");
-                    clear_buffer(&mut input_buffer);
                 }
                 SuitCommand::READY => {
                     info!("Received READY input message.");
@@ -90,16 +89,13 @@ fn main() {
                         .write(&[1])
                         .expect("Could not write bytes to TCP buffer!");
                     stream.flush().expect("Could not flush TCP write buffer!");
-                    clear_buffer(&mut input_buffer);
                 }
                 SuitCommand::CLOSE_CONNECTION => {
                     info!("Received CLOSE_CONNECTION input message. Closing connection.");
-                    clear_buffer(&mut input_buffer);
                     break;
                 }
                 SuitCommand::CLIENT_DISCONNECTED => {
                     info!("Client disconnected / received empty input. Closing connection");
-                    clear_buffer(&mut input_buffer);
                     break;
                 }
                 SuitCommand::DATA => {
@@ -152,7 +148,6 @@ fn main() {
                         .write(&quaternion_bytes)
                         .expect("Could not write bytes to TCP buffer!");
                     stream.flush().expect("Could not flush TCP write buffer!");
-                    clear_buffer(&mut input_buffer);
                 }
                 _ => {
                     // Ignore this connection if we can't understand it
@@ -160,7 +155,6 @@ fn main() {
                         "Unrecognized magic bytes received from client! {:?}",
                         input_buffer
                     );
-                    clear_buffer(&mut input_buffer);
                 }
             }
         }

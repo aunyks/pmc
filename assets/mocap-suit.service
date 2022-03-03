@@ -1,4 +1,9 @@
-# Copy me to /lib/systemd/system/
+# Copy me to /lib/systemd/system/ (need sudo)
+# Make sure I work:
+# sudo systemctl start mocap-suit.service
+# sudo systemctl stop mocap-suit.service
+# Let me run on boot:
+# sudo systemctl enable mocap-suit.service
 [Unit]
 Description=Mocap Suit TCP Server
 After=network-online.target

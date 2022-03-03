@@ -142,7 +142,7 @@ fn main() {
                 _ => {
                     // Ignore this connection if we can't understand it
                     debug!(
-                        "Unrecognized magic bytes received from client! {:?}",
+                        "Unrecognized command bytes received from client! {:?}",
                         input_buffer
                     );
                 }

@@ -61,12 +61,6 @@ fn main() {
     let tcp_listener = TcpListener::bind(server_bind_address).unwrap();
     for incoming_stream in tcp_listener.incoming() {
         let mut stream = incoming_stream.expect("Could not unwrap incoming TCP stream!");
-        if stream
-            .set_read_timeout(Some(Duration::from_millis(5500)))
-            .is_err()
-        {
-            warn!("Could not set the read timeout for an incoming TCP stream!");
-        }
         let mut input_buffer: [u8; 4] = [0; 4];
         // Keep the connection open until the client
         // closes it themselves
@@ -87,7 +81,7 @@ fn main() {
                     info!("Received READY input message.");
                     // Send a 1 for yes, 0 would be for no
                     stream
-                        .write(&[1 as u8])
+                        .write(&[1])
                         .expect("Could not write bytes to TCP buffer!");
                     stream.flush().expect("Could not flush TCP write buffer!");
                 }
@@ -148,7 +142,10 @@ fn main() {
                 }
                 _ => {
                     // Ignore this connection if we can't understand it
-                    debug!("Unrecognized magic bytes received from client!");
+                    debug!(
+                        "Unrecognized magic bytes received from client! {:?}",
+                        input_buffer
+                    );
                 }
             }
         }

@@ -68,6 +68,7 @@ fn main() {
         loop {
             if let Ok(num_bytes_read) = stream.read(&mut input_buffer) {
                 if num_bytes_read == 0 {
+                    debug!("No bytes read from TCP stream! Closing connection.");
                     break;
                 }
             } else {
@@ -89,10 +90,6 @@ fn main() {
                         .write(&[1])
                         .expect("Could not write bytes to TCP buffer!");
                     stream.flush().expect("Could not flush TCP write buffer!");
-                }
-                SuitCommand::CLOSE_CONNECTION => {
-                    info!("Received CLOSE_CONNECTION input message. Closing connection.");
-                    break;
                 }
                 SuitCommand::CLIENT_DISCONNECTED => {
                     info!("Client disconnected / received empty input. Closing connection");
